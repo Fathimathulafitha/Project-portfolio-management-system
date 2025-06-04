@@ -1,0 +1,623 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Member Dashboard</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js DataLabels -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f7fc;
+      color: #333;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background-color: #1e1e2e;
+      color: #f4f4f4;
+    }
+    body.dark-mode .bg-white {
+      background-color: #2a2a3a;
+    }
+    body.dark-mode .text-gray-600 {
+      color: #d1d5db;
+    }
+    body.dark-mode .text-gray-800 {
+      color: #f4f4f4;
+    }
+    body.dark-mode .shadow-lg {
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+    }
+    body.dark-mode .bg-gray-50 {
+      background-color: #252535;
+    }
+    body.dark-mode .bg-gray-100 {
+      background-color: #333344;
+    }
+    body.dark-mode .bg-gray-700 {
+      background-color: #3a3a4a;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 250px;
+      height: 100%;
+      background: linear-gradient(180deg, #2f4f73, #1a2c42);
+      padding-top: 20px;
+      color: #fff;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      transition: width 0.3s ease;
+    }
+    .sidebar.collapsed {
+      width: 70px;
+    }
+    .sidebar.collapsed .sidebar-text {
+      display: none;
+    }
+    .sidebar.collapsed .p-4 {
+      padding: 1rem;
+    }
+    .sidebar a {
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      font-size: 16px;
+      margin-bottom: 8px;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+    .sidebar a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateX(5px);
+    }
+    .content {
+      margin-left: 260px;
+      padding: 30px;
+      transition: margin-left 0.3s ease;
+    }
+    .content.collapsed {
+      margin-left: 90px;
+    }
+    .toggle-btn {
+      position: fixed;
+      top: 1.5rem;
+      left: 16rem;
+      font-size: 20px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #333;
+      z-index: 20;
+      transition: left 0.3s ease;
+    }
+    .sidebar.collapsed ~ .content .toggle-btn {
+      left: 4.5rem;
+    }
+    .dark-mode-btn {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      font-size: 20px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #333;
+      z-index: 20;
+    }
+    body.dark-mode .dark-mode-btn {
+      color: #f4f4f4;
+    }
+    .header {
+      background-color: #fff;
+      padding: 20px 30px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      border-radius: 10px;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark-mode .header {
+      background-color: #2a2a3a;
+      color: #f4f4f4;
+    }
+    .dashboard-card {
+      background-color: #fff;
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+      margin-bottom: 25px;
+      border-radius: 12px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s, color 0.3s;
+    }
+    body.dark-mode .dashboard-card {
+      background-color: #2a2a3a;
+      color: #f4f4f4;
+    }
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    .chart-container {
+      position: relative;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      transition: background 0.3s;
+    }
+    body.dark-mode .chart-container {
+      background: #2a2a3a;
+    }
+    .carousel-caption {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+    }
+    .carousel-item img {
+      max-height: 400px;
+    }
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .btn-outline-primary {
+      border-color: #2196F3;
+      color: #2196F3;
+    }
+    .btn-outline-primary:hover {
+      background-color: #2196F3;
+      color: #fff;
+    }
+    .badge {
+      padding: 0.5em 1em;
+      border-radius: 1rem;
+    }
+    .list-group-item {
+      border-left: 5px solid transparent;
+    }
+    .list-group-item:hover {
+      border-left: 5px solid #4e73df;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+    <div class="p-4 text-center">
+      <h3 class="text-xl font-semibold">Team Dashboard</h3>
+    </div>
+    <ul class="mt-4 space-y-2">
+      <li>
+        <a href="{% url 'team_member_dashboard' %}" class="flex items-center p-3 text-base hover:bg-white/10 rounded-lg transition-transform hover:translate-x-1">
+          <i class="fas fa-tachometer-alt w-6"></i>
+          <span class="ml-3 sidebar-text">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'tasks' %}" class="flex items-center p-3 text-base hover:bg-white/10 rounded-lg transition-transform hover:translate-x-1">
+          <i class="fas fa-tasks w-6"></i>
+          <span class="ml-3 sidebar-text">My Tasks</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'projects' %}" class="flex items-center p-3 text-base hover:bg-white/10 rounded-lg transition-transform hover:translate-x-1">
+          <i class="fas fa-folder-open w-6"></i>
+          <span class="ml-3 sidebar-text">My Projects</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'submit_feedback' %}" class="flex items-center p-3 text-base hover:bg-white/10 rounded-lg transition-transform hover:translate-x-1">
+          <i class="fas fa-comment-dots w-6"></i>
+          <span class="ml-3 sidebar-text">Give Feedback</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'feedback_list' %}" class="flex items-center p-3 text-base hover:bg-white/10 rounded-lg transition-transform hover:translate-x-1">
+          <i class="fas fa-comments w-6"></i>
+          <span class="ml-3 sidebar-text">View Feedback</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'profile' %}" class="flex items-center p-3 text-base hover:bg-white/10 rounded-lg transition-transform hover:translate-x-1">
+          <i class="fas fa-user w-6"></i>
+          <span class="ml-3 sidebar-text">Profile</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'logout' %}" class="flex items-center p-3 text-base hover:bg-white/10 rounded-lg transition-transform hover:translate-x-1">
+          <i class="fas fa-sign-out-alt w-6"></i>
+          <span class="ml-3 sidebar-text">Logout</span>
+        </a>
+      </li>
+    </ul>
+  </nav>  
+
+  <!-- Content -->
+  <div class="content" id="content">
+    <!-- Header -->
+    <header class="header flex justify-between items-center" aria-label="Dashboard header">
+      <div class="flex items-center gap-4">
+        <button class="toggle-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h2 class="text-2xl font-semibold">Welcome, {{ user.username|default:'Team Member' }}!</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="dark-mode-btn" onclick="toggleDarkMode()" aria-label="Toggle dark mode">
+          <i class="fas fa-moon"></i>
+        </button>
+        <div class="dropdown">
+          <button class="flex items-center gap-2 text-gray-600 dark:text-gray-300" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="{% static 'img/employee-1.jpg' %}" class="rounded-full w-8 h-8" alt="User profile">
+            <span>{{ user.username|default:'Team Member' }}</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+            <li><a class="dropdown-item text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" href="{% url 'profile' %}">Profile</a></li>
+            <li><a class="dropdown-item text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" href="{% url 'logout' %}">Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="p-6 max-w-7xl mx-auto w-full">
+      <!-- Note: Ensure the 'profile' URL is defined in urls.py to avoid NoReverseMatch errors -->
+      <!-- Carousel -->
+      <section class="mb-8 fade-in" aria-label="Promotional carousel">
+        <div id="teamCarousel" class="carousel slide rounded-xl shadow-lg" data-bs-ride="carousel">
+          <div class="carousel-inner">
+            <div class="carousel-item active">
+              <img src="{% static 'img/tm1.png' %}" class="d-block w-full h-64 object-cover lazy" alt="Team Collaboration" loading="lazy">
+              <div class="carousel-caption d-none d-md-block">
+                <h5 class="text-white">Collaborate Seamlessly</h5>
+                <p class="text-white">Work together to achieve project goals.</p>
+              </div>
+            </div>
+            <div class="carousel-item">
+              <img src="{% static 'img/tm2.jpg' %}" class="d-block w-full h-64 object-cover lazy" alt="Task Management" loading="lazy">
+              <div class="carousel-caption d-none d-md-block">
+                <h5 class="text-white">Stay on Track</h5>
+                <p class="text-white">Manage your tasks efficiently.</p>
+              </div>
+            </div>
+          </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#teamCarousel" data-bs-slide="prev" aria-label="Previous slide">
+            <span class="carousel-control-prev-icon"></span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#teamCarousel" data-bs-slide="next" aria-label="Next slide">
+            <span class="carousel-control-next-icon"></span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Task Summary -->
+      <section class="row fade-in" aria-label="Task summary">
+        <div class="col-md-4">
+          <div class="dashboard-card">
+            <div class="flex items-center gap-4">
+              <i class="fas fa-tasks text-3xl text-blue-500"></i>
+              <div>
+                <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100">Total Tasks</h4>
+                <p class="text-2xl font-bold text-blue-500">{{ total_tasks|default:0 }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="dashboard-card">
+            <div class="flex items-center gap-4">
+              <i class="fas fa-check-circle text-3xl text-green-500"></i>
+              <div>
+                <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100">Completed Tasks</h4>
+                <p class="text-2xl font-bold text-green-500">{{ completed_tasks|default:0 }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="dashboard-card">
+            <div class="flex items-center gap-4">
+              <i class="fas fa-hourglass-start text-3xl text-yellow-500"></i>
+              <div>
+                <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100">Pending Tasks</h4>
+                <p class="text-2xl font-bold text-yellow-500">{{ pending_tasks|default:0 }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Task Chart -->
+      <section class="chart-container fade-in" aria-label="Task status chart">
+        <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Task Status Overview</h4>
+        <div class="relative">
+          <canvas id="taskChart" class="h-64"></canvas>
+          <div class="absolute inset-0 flex items-center justify-center hidden" id="chartLoading">
+            <i class="fas fa-spinner fa-spin text-2xl text-blue-500"></i>
+          </div>
+        </div>
+        <div class="flex gap-4 mt-4 justify-end">
+          <button class="btn btn-outline-primary export-csv" data-chart="taskChart">Export CSV</button>
+          <button class="btn btn-outline-primary export-pdf" data-chart="taskChart">Export PDF</button>
+        </div>
+      </section>
+
+      <section class="dashboard-card fade-in" aria-label="Assigned tasks">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100">📝 Assigned Tasks</h4>
+          <div class="flex gap-2">
+            <select id="taskFilter" class="form-select form-select-sm">
+              <option value="all">All</option>
+              <option value="to_do">Pending</option>
+              <option value="in_progress">Ongoing</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <ul class="space-y-3" id="taskList">
+          {% for task in tasks %}
+            <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200" data-status="{{ task.status }}">
+              <div class="flex items-center gap-3">
+                <i class="fas fa-tasks text-green-500"></i>
+                <div>
+                  <span class="font-semibold text-gray-800 dark:text-gray-100">{{ task.name }}</span>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                    Project: {{ task.project.name }} | Due: {{ task.deadline|date:"M d, Y" }} | Priority: {{ task.priority|default:"Normal" }}
+                  </p>
+                </div>
+              </div>
+              <form method="POST" action="{% url 'update_task_status' task.id %}" class="flex items-center gap-2">
+                {% csrf_token %}
+                <select name="status" class="form-select form-select-sm">
+                  <option value="Pending" {% if task.status == "to_do" %}selected{% endif %}>Pending</option>
+                  <option value="Ongoing" {% if task.status == "in_progress" %}selected{% endif %}>Ongoing</option>
+                  <option value="Completed" {% if task.status == "completed" %}selected{% endif %}>Completed</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-outline-success"><i class="fas fa-check"></i></button>
+              </form>
+            </li>
+          {% empty %}
+            <li class="text-center text-gray-600 dark:text-gray-300 p-3">No tasks assigned</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Assigned Projects -->
+      <section class="dashboard-card fade-in" aria-label="Assigned projects">
+        <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">📌 Assigned Projects</h4>
+        <ul class="space-y-3">
+          {% for project in projects %}
+            <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200">
+              <div class="flex items-center gap-3">
+                <i class="fas fa-folder-open text-blue-500"></i>
+                <span class="font-semibold text-gray-800 dark:text-gray-100">{{ project.name }}</span>
+              </div>
+              <span class="badge bg-{% if project.status == 'completed' %}success{% elif project.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                {{ project.get_status_display }}
+              </span>
+            </li>
+          {% empty %}
+            <li class="text-center text-gray-600 dark:text-gray-300 p-3">No projects assigned</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Project Notes -->
+      <section class="dashboard-card fade-in" aria-label="Project notes">
+        <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">💬 Project Notes & Comments</h4>
+        <ul class="space-y-3">
+          {% for note in notes %}
+            <li class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200">
+              <strong class="text-gray-800 dark:text-gray-100">{{ note.project.name }}</strong>: {{ note.content }}
+            </li>
+          {% empty %}
+            <li class="text-center text-gray-600 dark:text-gray-300 p-3">No notes available</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Allocated Resources -->
+      <section class="dashboard-card fade-in" aria-label="Allocated resources">
+        <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">🔧 Allocated Resources</h4>
+        <ul class="space-y-3">
+          {% for resource in resources %}
+            <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200">
+              <div class="flex items-center gap-3">
+                <i class="fas fa-cogs text-teal-500"></i>
+                <span class="font-semibold text-gray-800 dark:text-gray-100">{{ resource.resource.name }}</span>
+              </div>
+              <small class="text-gray-600 dark:text-gray-300">Assigned on {{ resource.assigned_date|date:"M d, Y" }}</small>
+            </li>
+          {% empty %}
+            <li class="text-center text-gray-600 dark:text-gray-300 p-3">No resources allocated</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <!-- Notifications -->
+      <section class="dashboard-card fade-in" aria-label="Recent notifications">
+        <h4 class="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">🔔 Recent Notifications</h4>
+        <ul class="space-y-3" id="notificationList">
+          <!-- Populated by JavaScript -->
+        </ul>
+      </section>
+
+      <!-- User Profile -->
+      <section class="dashboard-card text-center fade-in" aria-label="User profile">
+        <img src="{% static 'img/employee-1.jpg' %}" class="rounded-full w-20 h-20 mx-auto mb-3" alt="User profile">
+        <h5 class="text-lg font-medium text-gray-800 dark:text-gray-100">{{ user.username|default:'Team Member' }}</h5>
+        <p class="text-gray-600 dark:text-gray-300">{{ user.email|default:'team@example.com' }}</p>
+        <a href="{% url 'profile' %}" class="btn btn-primary mt-3">Edit Profile</a>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let taskChart;
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+      document.getElementById('content').classList.toggle('collapsed');
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+      updateChartColors();
+    }
+
+    function updateChartColors() {
+      const isDarkMode = document.body.classList.contains('dark-mode');
+      taskChart.options.plugins.tooltip.backgroundColor = isDarkMode ? '#333' : '#fff';
+      taskChart.options.plugins.datalabels.color = isDarkMode ? '#f4f4f4' : '#333';
+      taskChart.update();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Theme Persistence
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+      }
+
+      // Lazy Load Chart
+      const chartContainer = document.querySelector('.chart-container');
+      const chartCanvas = document.getElementById('taskChart');
+      const chartLoading = document.getElementById('chartLoading');
+
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && !chartCanvas.dataset.loaded) {
+          chartLoading.classList.remove('hidden');
+          setTimeout(() => {
+            taskChart = new Chart(chartCanvas, {
+              type: 'pie',
+              data: {
+                labels: ['Pending', 'Ongoing', 'Completed'],
+                datasets: [{
+                  data: [
+                    {{ pending_tasks|default:0 }},
+                    {{ ongoing_tasks|default:0 }},
+                    {{ completed_tasks|default:0 }}
+                  ],
+                  backgroundColor: ['#F44336', '#FFC107', '#4CAF50'],
+                  borderColor: '#fff',
+                  borderWidth: 2
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: 'top' },
+                  title: { display: true, text: 'Task Status Distribution' },
+                  tooltip: { callbacks: { label: (context) => `${context.label}: ${context.raw}` } },
+                  datalabels: {
+                    color: '#333',
+                    formatter: (value, context) => value > 0 ? value : '',
+                    font: { weight: 'bold' }
+                  }
+                }
+              },
+              plugins: [ChartDataLabels]
+            });
+            chartCanvas.dataset.loaded = true;
+            chartLoading.classList.add('hidden');
+          }, 500); // Simulate loading
+        }
+      }, { threshold: 0.1 });
+      observer.observe(chartContainer);
+
+      // Export Chart Data
+      document.querySelector('.export-csv').addEventListener('click', () => {
+        const data = taskChart.data;
+        const csv = 'Status,Count\n' + data.labels.map((label, i) => `${label},${data.datasets[0].data[i]}`).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'task_stats.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+      });
+
+      document.querySelector('.export-pdf').addEventListener('click', () => {
+        const canvas = document.getElementById('taskChart');
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text('Task Status Overview', 20, 20);
+        doc.addImage(imgData, 'PNG', 20, 30, 160, 80);
+        doc.save('task_stats.pdf');
+      });
+
+      // Task Filter
+      document.getElementById('taskFilter').addEventListener('change', (e) => {
+        const filter = e.target.value;
+        const tasks = document.querySelectorAll('#taskList li');
+        tasks.forEach(task => {
+          if (filter === 'all' || task.dataset.status === filter) {
+            task.style.display = 'flex';
+          } else {
+            task.style.display = 'none';
+          }
+        });
+      });
+
+      // Mock Notifications (Replace with backend data)
+      const fetchNotifications = () => {
+        const notifications = [
+          { id: 1, icon: 'fa-bell', color: 'text-red-500', message: 'Task <strong>Design UI</strong> due tomorrow.' },
+          { id: 2, icon: 'fa-comment-dots', color: 'text-blue-500', message: 'New feedback received for <strong>Project Alpha</strong>.' },
+          { id: 3, icon: 'fa-check-circle', color: 'text-green-500', message: 'Task <strong>Code Review</strong> completed.' }
+        ];
+        document.getElementById('notificationList').innerHTML = notifications.map(n => `
+          <li class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200">
+            <div class="flex items-center gap-3">
+              <i class="fas ${n.icon} ${n.color}"></i>
+              <span>${n.message}</span>
+            </div>
+            <button class="btn btn-sm btn-outline-danger dismiss-notification" data-id="${n.id}"><i class="fas fa-times"></i></button>
+          </li>
+        `).join('');
+        
+        // Dismiss Notifications
+        document.querySelectorAll('.dismiss-notification').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.target.closest('li').remove();
+            // Optionally send request to backend to mark notification as read
+          });
+        });
+      };
+      fetchNotifications();
+      setInterval(fetchNotifications, 30000);
+    });
+  </script>
+</body>
+</html>

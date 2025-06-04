@@ -1,0 +1,438 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Denied</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #3b82f6;
+      --accent: #10b981;
+      --background: #f1f5f9;
+      --card-bg: #ffffff;
+      --text: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    [data-theme="dark"] {
+      --primary: #1e40af;
+      --secondary: #60a5fa;
+      --accent: #34d399;
+      --background: #111827;
+      --card-bg: #1f2937;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border: #374151;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--background), #e2e8f0);
+      color: var(--text);
+      transition: all 0.3s ease;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--primary), #1e40af);
+      padding: 2rem 1rem;
+      color: #fff;
+      box-shadow: 3px 0 15px rgba(0, 0, 0, 0.15);
+      transition: width 0.3s ease, transform 0.3s ease;
+      z-index: 1000;
+    }
+    .sidebar.collapsed {
+      width: 80px;
+    }
+    .sidebar.collapsed .sidebar-text, .sidebar.collapsed .sidebar-header {
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
+    }
+    .sidebar a {
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      margin: 0.25rem 0;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .sidebar a:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(4px);
+    }
+    .sidebar i {
+      width: 24px;
+      text-align: center;
+      margin-right: 0.75rem;
+      font-size: 1.1rem;
+    }
+    .content {
+      margin-left: 280px;
+      padding: 2.5rem;
+      transition: margin-left 0.3s ease;
+    }
+    .content.collapsed {
+      margin-left: 80px;
+    }
+    .toggle-btn {
+      position: fixed;
+      top: 1.75rem;
+      left: 1.5rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #fff;
+      z-index: 1001;
+      transition: left 0.3s ease, transform 0.3s ease;
+      border-radius: 50%;
+      padding: 0.5rem;
+    }
+    .toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .content.collapsed .toggle-btn {
+      left: 1rem;
+    }
+    .theme-toggle {
+      position: fixed;
+      top: 1.75rem;
+      right: 1.5rem;
+      font-size: 1.25rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--text);
+      border-radius: 50%;
+      padding: 0.5rem;
+      transition: background 0.3s ease;
+    }
+    .theme-toggle:hover {
+      background: var(--border);
+    }
+    .header {
+      background: var(--card-bg);
+      padding: 1.5rem 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border);
+    }
+    .dashboard-card {
+      background: var(--card-bg);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 16px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .dashboard-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    .error-icon {
+      font-size: 4rem;
+      color: #ef4444;
+      margin-bottom: 1.5rem;
+    }
+    .btn-primary {
+      background: var(--secondary);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background: var(--primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .file-upload-container {
+      background: var(--background);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px dashed var(--border);
+      text-align: center;
+      margin-top: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    .file-upload-container.dragover {
+      background: var(--border);
+      border-color: var(--secondary);
+    }
+    .file-upload-container input[type="file"] {
+      display: none;
+    }
+    .file-upload-container label {
+      cursor: pointer;
+      color: var(--secondary);
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    .file-upload-container label:hover {
+      color: var(--primary);
+    }
+    .file-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      border: 1px solid var(--border);
+    }
+    .file-list-item a {
+      color: var(--secondary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .file-list-item a:hover {
+      text-decoration: underline;
+    }
+    .fade-in {
+      animation: fadeIn 0.7s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        transform: translateX(-100%);
+      }
+      .sidebar.collapsed {
+        transform: translateX(-100%);
+      }
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+        padding: 1.5rem;
+      }
+      .content.collapsed {
+        margin-left: 0;
+      }
+      .toggle-btn {
+        left: 1rem;
+      }
+      .dashboard-card {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+    <div class="sidebar-header p-4 text-center">
+      <h3 class="text-xl font-bold tracking-tight">TeamSync Dashboard</h3>
+    </div>
+    <ul class="mt-6 space-y-2">
+      <li>
+        <a href="{% url 'team_member_dashboard' %}" class="active:bg-white/30">
+          <i class="fas fa-tachometer-alt"></i>
+          <span class="sidebar-text">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'tasks' %}">
+          <i class="fas fa-tasks"></i>
+          <span class="sidebar-text">My Tasks</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'projects' %}">
+          <i class="fas fa-folder-open"></i>
+          <span class="sidebar-text">My Projects</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'submit_feedback' %}">
+          <i class="fas fa-comment-dots"></i>
+          <span class="sidebar-text">Give Feedback</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'feedback_list' %}">
+          <i class="fas fa-comments"></i>
+          <span class="sidebar-text">View Feedback</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'profile' %}">
+          <i class="fas fa-user"></i>
+          <span class="sidebar-text">Profile</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'logout' %}">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="sidebar-text">Logout</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Content -->
+  <div class="content" id="content">
+    <!-- Header -->
+    <header class="header" aria-label="Page header">
+      <div class="flex items-center gap-4">
+        <button class="toggle-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h2 class="text-2xl font-semibold tracking-tight">Access Denied</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+          <i class="fas fa-moon"></i>
+        </button>
+        <div class="dropdown">
+          <button class="flex items-center gap-2 text-gray-700" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="{% static 'images/admin_profile.png' %}" class="rounded-full w-9 h-9 border-2 border-gray-200" alt="User profile">
+            <span class="text-sm font-semibold">{{ user.username|default:'Team Member' }}</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end bg-white shadow-lg rounded-lg border border-gray-100">
+            <li><a class="dropdown-item hover:bg-gray-100 py-2 px-4" href="{% url 'profile' %}">Profile</a></li>
+            <li><a class="dropdown-item hover:bg-gray-100 py-2 px-4" href="{% url 'logout' %}">Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-8xl mx-auto w-full">
+      <!-- Access Denied Message -->
+      <section class="dashboard-card fade-in" aria-label="Access denied message">
+        <i class="fas fa-ban error-icon"></i>
+        <h3 class="text-2xl font-bold mb-3 tracking-tight">Access Denied</h3>
+        <p class="text-gray-500 text-sm mb-5">You do not have permission to access this page. Please contact your administrator or return to the dashboard.</p>
+        <div class="flex justify-center gap-4">
+          <a href="{% url 'team_member_dashboard' %}" class="btn btn-primary">
+            <i class="fas fa-home mr-2"></i> Back to Dashboard
+          </a>
+          <a href="{% url 'logout' %}" class="btn btn-outline-primary">
+            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+          </a>
+        </div>
+        <!-- File Upload for Feedback or Reports -->
+        <div class="file-upload-container mt-5">
+          <label for="feedbackFileUpload" class="text-sm">
+            <i class="fas fa-cloud-upload-alt mr-2"></i> Upload Feedback or Report
+          </label>
+          <input type="file" id="feedbackFileUpload" multiple accept=".pdf,.doc,.docx,.jpg,.png">
+          <p class="text-xs text-gray-500 mt-2">Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 5MB)</p>
+          <ul class="file-list mt-3 space-y-2" id="feedbackFileList"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const content = document.getElementById('content');
+      sidebar.classList.toggle('collapsed');
+      content.classList.toggle('collapsed');
+      sidebar.classList.toggle('active', !sidebar.classList.contains('collapsed'));
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      const isDark = body.dataset.theme === 'dark';
+      body.dataset.theme = isDark ? 'light' : 'dark';
+      localStorage.setItem('theme', body.dataset.theme);
+    }
+
+    function handleFileUpload(inputId, listId, type) {
+      const input = document.getElementById(inputId);
+      const fileList = document.getElementById(listId);
+      const container = input.closest('.file-upload-container');
+
+      input.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+          if (file.size > 5 * 1024 * 1024) {
+            alert(`File ${file.name} exceeds 5MB limit.`);
+            return;
+          }
+          const li = document.createElement('li');
+          li.className = 'file-list-item';
+          li.innerHTML = `
+            <div class="flex items-center gap-2">
+              <i class="fas fa-file-alt text-blue-500"></i>
+              <a href="#" data-filename="${file.name}">${file.name}</a>
+            </div>
+            <small class="text-gray-500">${(file.size / 1024).toFixed(2)} KB</small>
+          `;
+          fileList.appendChild(li);
+
+          // Simulate file upload (replace with actual backend API call)
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('type', type);
+          // Example: fetch('/api/upload', { method: 'POST', body: formData });
+          console.log(`Uploading ${file.name} for ${type}`);
+        });
+        input.value = '';
+      });
+
+      // Drag and Drop
+      container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        container.classList.add('dragover');
+      });
+      container.addEventListener('dragleave', () => {
+        container.classList.remove('dragover');
+      });
+      container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        container.classList.remove('dragover');
+        input.files = e.dataTransfer.files;
+        input.dispatchEvent(new Event('change'));
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Theme Persistence
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.dataset.theme = 'dark';
+      }
+
+      // Initialize File Upload
+      handleFileUpload('feedbackFileUpload', 'feedbackFileList', 'feedback');
+    });
+  </script>
+</body>
+</html>

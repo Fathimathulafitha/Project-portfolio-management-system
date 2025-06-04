@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects | Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .project-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .project-card:hover {
+            transform: scale(1.05);
+        }
+        .project-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .project-status {
+            font-size: 16px;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+        .project-links a {
+            text-decoration: none;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .project-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Projects</h2>
+        
+        <div class="row">
+            {% for project in projects %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ project.name }}</h5>
+                        <p class="card-text">
+                            <span class="fw-bold">Status:</span>
+                            {% if project.status == 'in_progress' %}
+                                <span class="badge bg-primary">In Progress</span>
+                            {% elif project.status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% elif project.status == 'on_hold' %}
+                                <span class="badge bg-warning">On Hold</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{% url 'project_details' project.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">No projects found.</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="mt-4">
+            {% if user.role == 'admin' or user.role == 'manager' %}
+                <a href="{% url 'create_project' %}" class="btn btn-primary me-2">Add New Project</a>
+            {% endif %}
+            
+            <a href="{% url 'home' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+</body>
+</html>

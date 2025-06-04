@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resource Allocations</title>
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1rem 0;
+        }
+        .navbar-brand {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+        .navbar-brand i {
+            margin-right: 8px;
+            color: #ffd700;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            background: #1f2937;
+            color: white;
+            position: fixed;
+            top: 0;
+            left: -280px;
+            transition: left 0.3s ease-in-out;
+            padding: 2rem 1rem;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        }
+        .sidebar-active {
+            left: 0;
+        }
+        .sidebar a {
+            color: #d1d5db;
+            text-decoration: none;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            margin: 5px 10px;
+            transition: all 0.3s ease;
+            font-size: 1.05rem;
+        }
+        .sidebar a i {
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+        .sidebar a:hover {
+            background: #374151;
+            color: #fff;
+            transform: translateX(5px);
+        }
+        .toggle-btn {
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #fff;
+            padding: 10px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Content */
+        .container-main {
+            margin-left: 0;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            background: #fff;
+        }
+        .card-header {
+            background: linear-gradient(90deg, #3b82f6, #1e3a8a);
+            color: white;
+            font-weight: 500;
+            padding: 1.5rem;
+            border-radius: 12px 12px 0 0;
+        }
+        .table {
+            margin-bottom: 0;
+        }
+        .table thead {
+            background: #f1f5f9;
+            color: #1f2937;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        .table th, .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border: none;
+        }
+        .table tbody tr {
+            transition: background 0.2s ease;
+        }
+        .table tbody tr:hover {
+            background: #f8fafc;
+        }
+        .table td {
+            color: #374151;
+            font-weight: 400;
+        }
+        .alert-info {
+            background: #e0f2fe;
+            color: #1e40af;
+            border: none;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            background: linear-gradient(90deg, #1e3a8a, #111827);
+            color: #d1d5db;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Dark Mode */
+        .dark-mode {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        }
+        .dark-mode .card {
+            background: #2d3748;
+            color: #d1d5db;
+        }
+        .dark-mode .table thead {
+            background: #374151;
+            color: #fff;
+        }
+        .dark-mode .table tbody tr:hover {
+            background: #4b5563;
+        }
+        .dark-mode .table td {
+            color: #d1d5db;
+        }
+        .dark-mode .alert-info {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+        .dark-mode .footer {
+            background: #111827;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card, .table, .alert {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                left: -100%;
+            }
+            .container-main {
+                padding: 1rem;
+            }
+            .navbar-brand {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <a href="#" class="toggle-btn" onclick="toggleSidebar()"><i class="fas fa-times"></i></a>
+        <a href="#"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="#"><i class="fas fa-project-diagram"></i> Projects</a>
+        <a href="#"><i class="fas fa-users"></i> Teams</a>
+        <a href="#"><i class="fas fa-cog"></i> Settings</a>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-rocket"></i> Project Manager</a>
+            <div class="d-flex align-items-center">
+                <a href="#" class="toggle-btn me-3" onclick="toggleSidebar()"><i class="fas fa-bars"></i></a>
+                <button class="btn btn-outline-light" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-main">
+        <div class="container">
+            <div class="card mt-5">
+                <div class="card-header">
+                    <h2 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Resource Allocations</h2>
+                </div>
+                <div class="card-body">
+                    {% if allocations %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="text-center"><i class="fas fa-gem me-1"></i> Resource Name</th>
+                                        <th class="text-center"><i class="fas fa-tools me-1"></i> Role</th>
+                                        <th class="text-center"><i class="fas fa-user me-1"></i> Assigned To</th>
+                                        <th class="text-center"><i class="fas fa-calendar-alt me-1"></i> Assigned Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for allocation in allocations %}
+                                        <tr>
+                                            <td class="text-center fw-semibold">{{ allocation.resource.name }}</td>
+                                            <td class="text-center">{{ allocation.resource.role }}</td>
+                                            <td class="text-center">{{ allocation.assigned_to.username }}</td>
+                                            <td class="text-center text-muted">{{ allocation.assigned_date|date:"F j, Y, g:i A" }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle me-2"></i> No resources allocated to your team members yet.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <span>© 2025 Project Management System | All rights reserved</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS & Custom JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById("sidebar");
+            sidebar.classList.toggle("sidebar-active");
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            localStorage.setItem("darkMode", document.body.classList.contains("dark-mode"));
+        }
+
+        // Persist dark mode preference
+        if (localStorage.getItem("darkMode") === "true") {
+            document.body.classList.add("dark-mode");
+        }
+    </script>
+</body>
+</html>

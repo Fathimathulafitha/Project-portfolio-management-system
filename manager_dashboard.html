@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manager Dashboard</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- DataTables -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet" />
+  <!-- Frappe Gantt -->
+  <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css" rel="stylesheet" />
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- SortableJS for drag-and-drop Kanban -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .dark body, .dark .bg-gray-100, .dark .bg-white {
+      background-color: #1a1a1a !important;
+      color: #f4f4f4 !important;
+    }
+    .dark .text-gray-800 {
+      color: #f4f4f4 !important;
+    }
+    .dark .bg-gray-50 {
+      background-color: #2c2c2c !important;
+    }
+    .dark .border-gray-200 {
+      border-color: #4b5563 !important;
+    }
+    .dark .hover\:bg-gray-100:hover {
+      background-color: #4b5563 !important;
+    }
+    .dark .text-indigo-600 {
+      color: #f4f4f4 !important;
+    }
+    .dark .bg-yellow-50 {
+      background-color: #4a3b0a !important;
+    }
+    .dark .border-yellow-400 {
+      border-color: #ffb107 !important;
+    }
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    #gantt svg {
+      width: 100%;
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .kanban-column {
+      min-height: 300px;
+      background-color: #f3f4f6;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .kanban-card {
+      cursor: move;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <header class="bg-gradient-to-r from-[#34495e] to-[#2c3e50] text-white py-6 text-center">
+    <h1 class="text-3xl font-bold">Manager Dashboard</h1>
+    <p class="mt-2 text-lg">Streamline your project and task management</p>
+    <button id="themeToggle" class="mt-4 px-4 py-2 bg-white text-[#34495e] rounded-lg hover:bg-gray-100 transition">
+      Toggle Dark Mode
+    </button>
+  </header>
+
+  <nav class="bg-[#2c3e50] text-white py-3 sticky top-0 z-10" role="navigation" aria-label="Main navigation">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-center gap-4">
+      <a href="{% url 'manager_dashboard' %}" class="flex items-center gap-2 hover:text-gray-300 transition">
+        <i class="fas fa-chart-line"></i> Dashboard
+      </a>
+      <a href="{% url 'create_project' %}" class="flex items-center gap-2 hover:text-gray-300 transition">
+        <i class="fas fa-plus-circle"></i> Add Project
+      </a>
+      <a href="{% url 'create_task' %}" class="flex items-center gap-2 hover:text-gray-300 transition">
+        <i class="fas fa-tasks"></i> Add Task
+      </a>
+      <a href="{% url 'resource_dashboard' %}" class="flex items-center gap-2 hover:text-gray-300 transition">
+        <i class="fas fa-toolbox"></i> Resources
+      </a>
+      <a href="{% url 'submit_feedback' %}" class="flex items-center gap-2 hover:text-gray-300 transition">
+        <i class="fas fa-comment-alt"></i> Feedback
+      </a>
+      <a href="{% url 'feedback_list' %}" class="flex items-center gap-2 hover:text-gray-300 transition">
+        <i class="fas fa-comments"></i> View Feedback
+      </a>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto p-6">
+    <!-- Overview -->
+    <section class="fade-in">
+      <h2 class="text-2xl font-semibold mb-4 text-[#34495e]">Overview</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-1">
+          <h3 class="text-lg font-medium">Total Projects</h3>
+          <p class="text-2xl font-bold text-[#3498db]">{{ total_projects|default:0 }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-1">
+          <h3 class="text-lg font-medium">Completed</h3>
+          <p class="text-2xl font-bold text-[#2ecc71]">{{ completed_projects|default:0 }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-1">
+          <h3 class="text-lg font-medium">In Progress</h3>
+          <p class="text-2xl font-bold text-[#f1c40f]">{{ ongoing_projects|default:0 }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-1">
+          <h3 class="text-lg font-medium">Pending</h3>
+          <p class="text-2xl font-bold text-[#e74c3c]">{{ pending_projects|default:0 }}</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- Quick Task Creation -->
+    <section class="mt-8 fade-in">
+      <h2 class="text-2xl font-semibold mb-4 text-[#34495e]">Quick Task Creation</h2>
+      <div class="bg-white p-6 rounded-lg shadow-md">
+          <form method="post" action="{% url 'create_task' %}">
+              {% csrf_token %}
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input type="text" name="name" class="p-3 border border-gray-200 rounded-lg" placeholder="Task Name" required>
+                  <input type="date" name="deadline" class="p-3 border border-gray-200 rounded-lg" required>
+                  <select name="assigned_to" class="p-3 border border-gray-200 rounded-lg" required>
+                      <option value="">Assign To</option>
+                      {% for user in users %}
+                      <option value="{{ user.id }}">{{ user.username }}</option>
+                      {% endfor %}
+                  </select>
+                  <select name="status" class="p-3 border border-gray-200 rounded-lg" required>
+                      <option value="to_do">To Do</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                  </select>
+                  <input type="hidden" name="description" value="Quick task">
+                  <input type="hidden" name="project" value="1">  <!-- Set project ID dynamically -->
+              </div>
+              <button type="submit" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                  Add Task
+              </button>
+          </form>
+      </div>
+  </section>
+
+    <!-- Deliverables Summary -->
+    <section class="mt-8 fade-in">
+      <h2 class="text-2xl font-semibold mb-4 text-[#34495e]">Deliverables Summary</h2>
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <table id="deliverablesTable" class="w-full">
+          <thead class="bg-[#2c3e50] text-white">
+            <tr>
+              <th class="p-3">Project</th>
+              <th class="p-3">Deadline</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Team</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for project in projects %}
+            <tr class="border-b border-gray-200 hover:bg-gray-50">
+              <td class="p-3">{{ project.name }}</td>
+              <td class="p-3">{{ project.deadline }}</td>
+              <td class="p-3">{{ project.status }}</td>
+              <td class="p-3">{{ project.team.name }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="mt-8 fade-in">
+      <h2 class="text-2xl font-semibold mb-4 text-[#34495e]">Project and Task Insights</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-md chart-container h-96">
+          <canvas id="projectChart"></canvas>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md chart-container h-96">
+          <canvas id="taskChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gantt Chart -->
+    <section class="mt-8 fade-in">
+      <h2 class="text-2xl font-semibold mb-4 text-[#34495e]">Project Timeline</h2>
+      <div class="bg-white p-6 rounded-lg shadow-md chart-container">
+        <div id="gantt"></div>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    <section class="mt-8 fade-in">
+      <h2 class="text-2xl font-semibold mb-4 text-[#34495e]">PROJECTS</h2>
+      <div class="flex flex-col sm:flex-row gap-4 mb-4">
+        <input type="text" id="projectSearch" class="flex-1 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3498db]" placeholder="Search Projects..." aria-label="Search projects" />
+        <select id="statusFilter" class="p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3498db]" aria-label="Filter by status">
+          <option value="">All Statuses</option>
+          <option value="completed">Completed</option>
+          <option value="in_progress">In Progress</option>
+          <option value="on_hold">Pending</option>
+        </select>
+      </div>
+      <div id="projectList" class="space-y-4">
+        {% for project in projects %}
+        <div class="project-card bg-white p-6 rounded-lg shadow-md flex justify-between items-center hover:shadow-lg transition transform hover:-translate-y-1">
+          <div>
+            <strong class="project-name text-lg font-medium">{{ project.name }}</strong>
+            <p>Status: <span class="project-status">{{ project.status }}</span></p>
+          </div>
+          <a href="{% url 'project_details' project.id %}" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">View</a>
+        </div>
+        {% endfor %}
+        <div class="flex justify-center gap-4 mt-4">
+          {% if projects.has_previous %}
+          <a href="?page={{ projects.previous_page_number }}" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">Previous</a>
+          {% endif %}
+          {% if projects.has_next %}
+          <a href="?page={{ projects.next_page_number }}" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">Next</a>
+          {% endif %}
+        </div>
+        <div class="flex justify-between mt-4">
+          <a href="{% url 'create_project' %}" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">+ Add Project</a>
+          <div class="flex gap-4">
+            <button id="exportCsv" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">Export CSV</button>
+            <button id="exportPdf" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">Export PDF</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tasks -->
+    <section class="mt-8 fade-in">
+      <h2 class="text-2xl font-semibold mb-4 text-[#34495e]">TASKS</h2>
+      {% if tasks %}
+      <p class="text-gray-600 mb-4">Found {{ tasks.count }} tasks.</p>
+      {% else %}
+      <p class="text-gray-600 mb-4">No tasks available.</p>
+      {% endif %}
+      <div class="flex flex-col sm:flex-row gap-4 mb-4">
+        <input type="text" id="taskSearch" class="flex-1 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3498db]" placeholder="Search Tasks..." aria-label="Search tasks" />
+        <select id="taskSort" class="p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3498db]" aria-label="Sort tasks">
+          <option value="">Sort By</option>
+          <option value="deadline">Deadline</option>
+          <option value="status">Status</option>
+          <option value="assigned">Assigned To</option>
+        </select>
+      </div>
+      <div class="flex gap-4 mb-4">
+        <button id="listViewBtn" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">List View</button>
+        <button id="kanbanViewBtn" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">Kanban View</button>
+      </div>
+      <div id="taskListView" class="task-list space-y-4">
+        <ul id="taskList" class="space-y-4">
+          {% for task in tasks %}
+          <li class="task-item bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition" data-id="{{ task.id }}" data-deadline="{{ task.deadline }}" data-status="{{ task.status }}" data-assigned="{{ task.assigned_to.username }}">
+            <strong class="task-name text-lg font-medium">{{ task.name }}</strong> - {{ task.get_status_display }} (Due: {{ task.deadline }})<br />
+            Assigned to: {{ task.assigned_to.username }}
+          </li>
+          {% empty %}
+          <li class="bg-white p-6 rounded-lg shadow-md text-center text-gray-500">No tasks found.</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div id="kanbanView" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="kanban-column">
+          <h3 class="text-lg font-medium mb-2">To Do</h3>
+          <div id="kanbanToDo" class="space-y-2">
+            {% for task in tasks %}
+            {% if task.status == 'to_do' %}
+            <div class="kanban-card bg-white p-4 rounded-lg shadow-md" data-id="{{ task.id }}" data-status="{{ task.status }}">
+              <strong>{{ task.name }}</strong><br />
+              Due: {{ task.deadline }}<br />
+              Assigned: {{ task.assigned_to.username }}
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="kanban-column">
+          <h3 class="text-lg font-medium mb-2">In Progress</h3>
+          <div id="kanbanInProgress" class="space-y-2">
+            {% for task in tasks %}
+            {% if task.status == 'in_progress' %}
+            <div class="kanban-card bg-white p-4 rounded-lg shadow-md" data-id="{{ task.id }}" data-status="{{ task.status }}">
+              <strong>{{ task.name }}</strong><br />
+              Due: {{ task.deadline }}<br />
+              Assigned: {{ task.assigned_to.username }}
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        <div class="kanban-column">
+          <h3 class="text-lg font-medium mb-2">Completed</h3>
+          <div id="kanbanCompleted" class="space-y-2">
+            {% for task in tasks %}
+            {% if task.status == 'completed' %}
+            <div class="kanban-card bg-white p-4 rounded-lg shadow-md" data-id="{{ task.id }}" data-status="{{ task.status }}">
+              <strong>{{ task.name }}</strong><br />
+              Due: {{ task.deadline }}<br />
+              Assigned: {{ task.assigned_to.username }}
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-center gap-4 mt-4">
+        {% if tasks.has_previous %}
+        <a href="?task_page={{ tasks.previous_page_number }}" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">Previous</a>
+        {% endif %}
+        {% if tasks.has_next %}
+        <a href="?task_page={{ tasks.next_page_number }}" class="px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition">Next</a>
+        {% endif %}
+      </div>
+      <a href="{% url 'create_task' %}" class="inline-block px-4 py-2 bg-gradient-to-r from-[#3498db] to-[#2980b9] text-white rounded-lg hover:from-[#2980b9] hover:to-[#1f618d] transition mt-4">+ Add Task</a>
+    </section>
+
+    <!-- Notifications -->
+    <section class="mt-8 fade-in">
+      <h2 class="text-2xl font-semibold mb-4 text-[#34495e]">Notifications</h2>
+      <div class="notifications bg-[#fff3cd] border-l-4 border-[#ffc107] p-4 rounded-lg" id="notificationList">
+        <p>Loading notifications...</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Theme Toggle
+    const toggleTheme = () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    };
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+
+    // Chart Configurations
+    const chartConfigs = {
+      projectChart: {
+        type: 'pie',
+        data: {
+          labels: ['Completed', 'In Progress', 'Pending'],
+          datasets: [{
+            data: [{% autoescape off %}{{ completed_projects|default:0 }}, {{ ongoing_projects|default:0 }}, {{ pending_projects|default:0 }}{% endautoescape %}],
+            backgroundColor: ['#2ecc71', '#f1c40f', '#e74c3c']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      },
+      taskChart: {
+        type: 'bar',
+        data: {
+          labels: ['Total Tasks', 'Overdue Tasks', 'Completed Projects'],
+          datasets: [{
+            label: 'Task Stats',
+            data: [{% autoescape off %}{{ total_tasks|default:0 }}, {{ overdue_tasks|default:0 }}, {{ completed_projects|default:0 }}{% endautoescape %}],
+            backgroundColor: ['#3498db', '#e67e22', '#2ecc71']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } }
+        }
+      },
+      resourceChart: {
+        type: 'bar',
+        data: {
+          labels: ['Alice', 'Bob', 'Charlie'],
+          datasets: [{
+            label: 'Tasks Assigned',
+            data: [{% autoescape off %}{{ alice_tasks|default:0 }}, {{ bob_tasks|default:0 }}, {{ charlie_tasks|default:0 }}{% endautoescape %}],
+            backgroundColor: ['#3498db', '#e67e22', '#2ecc71']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } }
+        }
+      }
+    };
+
+    // Lazy Load Charts
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const canvas = entry.target.querySelector('canvas');
+          if (canvas && !canvas.dataset.loaded) {
+            new Chart(canvas, chartConfigs[canvas.id]);
+            canvas.dataset.loaded = true;
+          }
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.chart-container').forEach(container => observer.observe(container));
+
+    // DataTables
+    $(document).ready(function() {
+      $('#deliverablesTable').DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        pageLength: 10,
+        language: { search: '', searchPlaceholder: 'Search deliverables...' }
+      });
+      // Debug: Log task count and data
+      const taskCount = document.querySelectorAll('.task-item').length;
+      console.log('Tasks rendered:', taskCount);
+      if (taskCount === 0) {
+        console.warn('No tasks rendered. Check if tasks exist in the database or if the "tasks" context is correctly passed.');
+      } else {
+        document.querySelectorAll('.task-item').forEach(task => {
+          console.log('Task:', {
+            id: task.dataset.id,
+            name: task.querySelector('.task-name').textContent,
+            status: task.dataset.status,
+            assigned: task.dataset.assigned
+          });
+        });
+      }
+    });
+
+    // Gantt Chart
+    const ganttTasks = [
+      {% for project in projects %}
+      {
+        id: '{{ project.id }}',
+        name: '{{ project.name }}',
+        start: '{{ project.start_date|date:"Y-m-d" }}',
+        end: '{{ project.deadline|date:"Y-m-d" }}',
+        progress: 0,
+        dependencies: ''
+      },
+      {% endfor %}
+    ];
+    if (ganttTasks.length) {
+      new Gantt('#gantt', ganttTasks, {
+        view_mode: 'Month',
+        date_format: 'YYYY-MM-DD'
+      });
+    }
+
+    // Filter and Search Projects
+    const filterProjects = () => {
+      const searchTerm = document.getElementById('projectSearch').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      document.querySelectorAll('.project-card').forEach(card => {
+        const projectName = card.querySelector('.project-name').textContent.toLowerCase();
+        const cardStatus = card.querySelector('.project-status').textContent.trim();
+        const matchesSearch = projectName.includes(searchTerm);
+        const matchesStatus = !status || cardStatus === status;
+        card.style.display = (matchesSearch && matchesStatus) ? 'flex' : 'none';
+      });
+    };
+    document.getElementById('projectSearch').addEventListener('keyup', filterProjects);
+    document.getElementById('statusFilter').addEventListener('change', filterProjects);
+
+    // Task Search and Sort
+    const filterTasks = () => {
+      const searchTerm = document.getElementById('taskSearch').value.toLowerCase();
+      const sortBy = document.getElementById('taskSort').value;
+      const tasks = Array.from(document.querySelectorAll('.task-item'));
+      console.log('Filtering tasks:', { searchTerm, sortBy, taskCount: tasks.length });
+      tasks.forEach(task => {
+        const taskName = task.querySelector('.task-name').textContent.toLowerCase();
+        task.style.display = taskName.includes(searchTerm) ? 'block' : 'none';
+      });
+      if (sortBy) {
+        tasks.sort((a, b) => {
+          if (sortBy === 'deadline') return new Date(a.dataset.deadline) - new Date(b.dataset.deadline);
+          if (sortBy === 'status') return a.dataset.status.localeCompare(b.dataset.status);
+          if (sortBy === 'assigned') return a.dataset.assigned.localeCompare(b.dataset.assigned);
+          return 0;
+        });
+        const taskList = document.getElementById('taskList');
+        taskList.innerHTML = '';
+        tasks.forEach(task => taskList.appendChild(task));
+      }
+    };
+    document.getElementById('taskSearch').addEventListener('keyup', filterTasks);
+    document.getElementById('taskSort').addEventListener('change', filterTasks);
+
+    // Quick Task Creation
+    document.getElementById('quickTaskSubmit').addEventListener('click', () => {
+      const taskName = document.getElementById('quickTaskName').value;
+      const deadline = document.getElementById('quickTaskDeadline').value;
+      const assignedTo = document.getElementById('quickTaskAssignedTo').value;
+      const status = document.getElementById('quickTaskStatus').value;
+      if (taskName && deadline && assignedTo && status) {
+        const taskList = document.getElementById('taskList');
+        const kanbanColumn = document.getElementById(`kanban${status.replace('to_do', 'ToDo').replace('in_progress', 'InProgress').replace('completed', 'Completed')}`);
+        const taskId = `new-${Date.now()}`;
+        const li = document.createElement('li');
+        li.className = 'task-item bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition';
+        li.dataset.id = taskId;
+        li.dataset.deadline = deadline;
+        li.dataset.status = status;
+        li.dataset.assigned = assignedTo;
+        li.innerHTML = `
+          <strong class="task-name text-lg font-medium">${taskName}</strong> - ${status.replace('to_do', 'To Do').replace('in_progress', 'In Progress').replace('completed', 'Completed')} (Due: ${deadline})<br />
+          Assigned to: ${assignedTo}
+        `;
+        taskList.prepend(li);
+        if (kanbanColumn) {
+          const card = document.createElement('div');
+          card.className = 'kanban-card bg-white p-4 rounded-lg shadow-md';
+          card.dataset.id = taskId;
+          card.dataset.status = status;
+          card.innerHTML = `
+            <strong>${taskName}</strong><br />
+            Due: ${deadline}<br />
+            Assigned: ${assignedTo}
+          `;
+          kanbanColumn.appendChild(card);
+        }
+        document.getElementById('quickTaskName').value = '';
+        document.getElementById('quickTaskDeadline').value = '';
+        document.getElementById('quickTaskAssignedTo').value = '';
+        document.getElementById('quickTaskStatus').value = 'to_do';
+        alert('Task added successfully!');
+      } else {
+        alert('Please fill in all fields.');
+      }
+    });
+
+    // Kanban View Toggle
+    document.getElementById('listViewBtn').addEventListener('click', () => {
+      document.getElementById('taskListView').classList.remove('hidden');
+      document.getElementById('kanbanView').classList.add('hidden');
+    });
+    document.getElementById('kanbanViewBtn').addEventListener('click', () => {
+      document.getElementById('taskListView').classList.add('hidden');
+      document.getElementById('kanbanView').classList.remove('hidden');
+    });
+
+    // Kanban Drag-and-Drop
+    ['kanbanToDo', 'kanbanInProgress', 'kanbanCompleted'].forEach(columnId => {
+      Sortable.create(document.getElementById(columnId), {
+        group: 'kanban',
+        animation: 150,
+        onEnd: (evt) => {
+          const taskId = evt.item.dataset.id;
+          const newStatus = evt.to.id.replace('kanban', '').replace('ToDo', 'to_do').replace('InProgress', 'in_progress').replace('Completed', 'completed');
+          console.log(`Task ${taskId} moved to ${newStatus}`);
+          evt.item.dataset.status = newStatus;
+          const taskItem = document.querySelector(`.task-item[data-id="${taskId}"]`);
+          if (taskItem) {
+            taskItem.dataset.status = newStatus;
+            const statusText = taskItem.querySelector('.task-name').nextSibling;
+            statusText.textContent = ` - ${newStatus.replace('to_do', 'To Do').replace('in_progress', 'In Progress').replace('completed', 'Completed')} `;
+          }
+        }
+      });
+    });
+
+    // Export CSV
+    document.getElementById('exportCsv').addEventListener('click', () => {
+      const projects = [
+        {% for project in projects %}
+        { name: "{{ project.name }}", status: "{{ project.status }}", deadline: "{{ project.deadline }}", team: "{{ project.team.name }}" },
+        {% endfor %}
+      ];
+      const csv = 'Name,Status,Deadline,Team\n' + projects.map(p => `${p.name},${p.status},${p.deadline},${p.team}`).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'projects.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    });
+
+    // Export PDF
+    document.getElementById('exportPdf').addEventListener('click', () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text('Projects Report', 20, 20);
+      doc.setFontSize(12);
+      let y = 30;
+      const projects = [
+        {% for project in projects %}
+        { name: "{{ project.name }}", status: "{{ project.status }}", deadline: "{{ project.deadline }}", team: "{{ project.team.name }}" },
+        {% endfor %}
+      ];
+      projects.forEach(p => {
+        doc.text(`Name: ${p.name}`, 20, y);
+        doc.text(`Status: ${p.status}`, 20, y + 5);
+        doc.text(`Deadline: ${p.deadline}`, 20, y + 10);
+        doc.text(`Team: ${p.team}`, 20, y + 15);
+        y += 25;
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+      });
+      doc.save('projects.pdf');
+    });
+
+    // Real-Time Notifications
+    const fetchNotifications = () => {
+      const mockNotifications = [
+        { message: 'Task "Design UI" moved to In Progress', timestamp: new Date().toLocaleString() },
+        { message: 'Project "Website Redesign" nearing deadline', timestamp: new Date().toLocaleString() }
+      ];
+      document.getElementById('notificationList').innerHTML = mockNotifications.map(n => `
+        <p class="flex items-center gap-2"><i class="fas fa-bell text-[#ffc107]"></i> ${n.message} <span class="text-sm text-gray-500">${n.timestamp}</span></p>
+      `).join('');
+    };
+    fetchNotifications();
+    setInterval(fetchNotifications, 30000);
+  </script>
+</body>
+</html>

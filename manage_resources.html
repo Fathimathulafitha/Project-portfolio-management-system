@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Resources</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+        }
+        .container {
+            background: #ffffff;
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            margin-top: 3rem;
+            max-width: 1200px;
+            transition: transform 0.2s ease-in-out;
+        }
+        .container:hover {
+            transform: translateY(-2px);
+        }
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: -0.025em;
+        }
+        h4 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2563eb;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        h4::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: #2563eb;
+            border-radius: 2px;
+        }
+        table {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: none;
+        }
+        thead {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: #ffffff;
+        }
+        th {
+            font-weight: 600;
+            padding: 1rem;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+        tbody tr:hover {
+            background: #f1f5f9;
+        }
+        td {
+            padding: 1rem;
+            vertical-align: middle;
+            font-size: 0.95rem;
+        }
+        .btn-primary {
+            background: #2563eb;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+        }
+        .btn-primary:hover {
+            background: #1e40af;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .text-muted {
+            color: #64748b !important;
+            font-style: italic;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+                margin-top: 2rem;
+            }
+            h2 {
+                font-size: 1.75rem;
+            }
+            h4 {
+                font-size: 1.25rem;
+            }
+            th, td {
+                font-size: 0.875rem;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto">
+        <h2>Manage Resources</h2>
+        
+        <h4>Resources List</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resource in resources %}
+                    <tr>
+                        <td>{{ resource.name }}</td>
+                        <td>{{ resource.role }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="2" class="text-center text-muted">No resources found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h4>Assigned Resources</h4>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>Assigned To</th>
+                    <th>Assigned Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for allocation in allocations %}
+                    <tr>
+                        <td>{{ allocation.resource.name }}</td>
+                        <td>{{ allocation.assigned_to.username }}</td>
+                        <td>{{ allocation.assigned_date|date:"d M Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No allocations found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="text-center mt-5">
+            <a href="{% url 'assign_resource' %}" class="btn btn-primary">Assign New Resource</a>
+            <br>
+            <br>
+            <center> <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a></center>
+        </div>
+    </div>
+</body>
+</html>

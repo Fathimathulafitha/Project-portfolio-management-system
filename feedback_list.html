@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Feedback List</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Type</th>
+                <th>Project</th>
+                <th>Task</th>
+                <th>Comments</th>
+                <th>Rating</th>
+                <th>Response</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for feedback in feedbacks %}
+            <tr>
+                <td>{{ feedback.user.username }}</td>
+                <td>{{ feedback.feedback_type }}</td>
+                <td>{{ feedback.project.name|default:"N/A" }}</td>
+                <td>{{ feedback.task.name|default:"N/A" }}</td>
+                <td>{{ feedback.comments }}</td>
+                <td>{{ feedback.rating }}</td>
+                <td>
+                    {% if feedback.feedbackresponse %}
+                        {{ feedback.feedbackresponse.response_text }}
+                    {% else %}
+                        <span class="text-danger">No response yet</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if request.user.is_staff or request.user.is_superuser %}
+                        {% if not feedback.feedbackresponse %}
+                            <a href="{% url 'respond_feedback' feedback.id %}" class="btn btn-success">Respond</a>
+                        {% else %}
+                            <span class="text-muted">Responded</span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

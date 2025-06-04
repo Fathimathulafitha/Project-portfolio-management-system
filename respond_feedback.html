@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Respond to Feedback</h2>
+    <p><strong>User:</strong> {{ feedback.user.username }}</p>
+    <p><strong>Feedback Type:</strong> {{ feedback.feedback_type }}</p>
+    <p><strong>Comments:</strong> {{ feedback.comments }}</p>
+    <p><strong>Rating:</strong> {{ feedback.rating }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Submit Response</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,592 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7fc;
+            color: #333;
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        body.dark-mode {
+            background-color: #1e1e2e;
+            color: #f4f4f4;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100%;
+            background: linear-gradient(180deg, #2f4f73, #1a2c42);
+            padding: 1.5rem 1rem;
+            color: #fff;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: width 0.3s ease, transform 0.3s ease;
+            z-index: 1000;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar.collapsed .sidebar-text, .sidebar.collapsed .sidebar-header {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+        .sidebar a {
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .sidebar a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        .sidebar i {
+            width: 24px;
+            text-align: center;
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+        .content {
+            margin-left: 260px;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+        .content.collapsed {
+            margin-left: 90px;
+        }
+        .toggle-btn {
+            position: fixed;
+            top: 1.5rem;
+            left: 260px;
+            font-size: 1.25rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #333;
+            border-radius: 50%;
+            padding: 0.5rem;
+            transition: left 0.3s ease, transform 0.3s ease;
+        }
+        .toggle-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .dark-mode-btn {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 1.25rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #333;
+            border-radius: 50%;
+            padding: 0.5rem;
+            transition: background 0.3s ease;
+        }
+        body.dark-mode .toggle-btn, body.dark-mode .dark-mode-btn {
+            color: #f4f4f4;
+        }
+        .dark-mode-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .content.collapsed .toggle-btn {
+            left: 1rem;
+        }
+        .header {
+            background: #fff;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-mode .header {
+            background: #2a2a3a;
+            color: #f4f4f4;
+        }
+        .dashboard-card {
+            background: #fff;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s, color 0.3s;
+        }
+        body.dark-mode .dashboard-card {
+            background: #2a2a3a;
+            color: #f4f4f4;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .card-stat {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            color: #2196F3;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+        body.dark-mode .chart-container {
+            background: #2a2a3a;
+        }
+        .carousel-item img {
+            max-height: 350px;
+            object-fit: cover;
+            border-radius: 12px;
+            filter: brightness(0.9);
+            transition: transform 0.5s ease;
+        }
+        .carousel-item img:hover {
+            transform: scale(1.02);
+        }
+        .carousel-caption {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            padding: 0.75rem;
+            backdrop-filter: blur(6px);
+            color: #fff;
+        }
+        .progress-bar {
+            transition: width 0.6s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.7s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn-primary, .btn-success {
+            border-radius: 8px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover, .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .notification-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .notification-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateX(4px);
+        }
+        body.dark-mode .notification-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .profile-img {
+            transition: transform 0.3s ease;
+        }
+        .profile-img:hover {
+            transform: scale(1.1);
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+            }
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+            .content.collapsed {
+                margin-left: 0;
+            }
+            .toggle-btn {
+                left: 1rem;
+            }
+            .carousel-item img {
+                max-height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% csrf_token %}
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+        <div class="sidebar-header p-4 text-center">
+            <h3 class="text-xl font-bold tracking-tight">Admin Panel</h3>
+        </div>
+        <ul class="mt-6 space-y-2">
+            <li>
+                <a href="{% url 'admin_dashboard' %}" class="active:bg-white/30">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="sidebar-text">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'users' %}">
+                    <i class="fas fa-users"></i>
+                    <span class="sidebar-text">All Users</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'projectmanagers' %}">
+                    <i class="fas fa-user-tie"></i>
+                    <span class="sidebar-text">Project Managers</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'projects' %}">
+                    <i class="fas fa-folder-open"></i>
+                    <span class="sidebar-text">Projects</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'manage_resources' %}">
+                    <i class="fas fa-cogs"></i>
+                    <span class="sidebar-text">Resources</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'tasks' %}">
+                    <i class="fas fa-tasks"></i>
+                    <span class="sidebar-text">Tasks</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'report_pdf_template' %}">
+                    <i class="fas fa-file-alt"></i>
+                    <span class="sidebar-text">Reports</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'assign_team' %}">
+                    <i class="fas fa-users-cog"></i>
+                    <span class="sidebar-text">Assign Team Members</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'submit_feedback' %}">
+                    <i class="fas fa-comment-dots"></i>
+                    <span class="sidebar-text">Give Feedback</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'feedback_list' %}">
+                    <i class="fas fa-comments"></i>
+                    <span class="sidebar-text">View Feedback</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="sidebar-text">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Toggle Buttons -->
+    <button class="toggle-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+        <i class="fas fa-bars"></i>
+    </button>
+    <button class="dark-mode-btn" onclick="toggleDarkMode()" aria-label="Toggle theme">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <!-- Content -->
+    <div class="content" id="content">
+        <!-- Header -->
+        <header class="header fade-in" aria-label="Dashboard header">
+            <div class="flex items-center gap-4">
+                <h2 class="text-2xl font-semibold tracking-tight">Welcome, Admin!</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="dropdown">
+                    <button class="flex items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="{% static 'images/admin_profile.png' %}" class="rounded-full w-9 h-9 border-2 border-gray-200 profile-img" alt="Admin profile">
+                        <span class="text-sm font-semibold">Admin</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end bg-white shadow-lg rounded-lg border border-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                        <li><a class="dropdown-item hover:bg-gray-100 dark:hover:bg-gray-700 py-2 px-4" href="{% url 'profile' %}">Profile</a></li>
+                        <li><a class="dropdown-item hover:bg-gray-100 dark:hover:bg-gray-700 py-2 px-4" href="{% url 'logout' %}">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-8xl mx-auto w-full">
+            <!-- Carousel -->
+            <section class="mb-6 fade-in" aria-label="Promotional carousel">
+                <div id="adminCarousel" class="carousel slide shadow-lg" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <img src="{% static 'img/ad1.jpg' %}" class="d-block w-full" alt="Admin Dashboard" loading="lazy">
+                            <div class="carousel-caption">
+                                <h5 class="font-bold text-lg">Streamlined Administration</h5>
+                                <p class="text-sm">Manage projects, teams, and resources effortlessly.</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <img src="{% static 'img/ad2.jpg' %}" class="d-block w-full" alt="Project Management" loading="lazy">
+                            <div class="carousel-caption">
+                                <h5 class="font-bold text-lg">Efficient Project Oversight</h5>
+                                <p class="text-sm">Track progress and ensure timely delivery.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#adminCarousel" data-bs-slide="prev" aria-label="Previous slide">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#adminCarousel" data-bs-slide="next" aria-label="Next slide">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Dashboard Cards -->
+            <section class="row fade-in" aria-label="Dashboard statistics">
+                <div class="col-md-4">
+                    <div class="dashboard-card flex items-center gap-4">
+                        <i class="fas fa-users text-3xl text-blue-600"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 tracking-tight">Total Users</h4>
+                            <div class="card-stat">{{ total_users|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="dashboard-card flex items-center gap-4">
+                        <i class="fas fa-folder-open text-3xl text-green-600"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 tracking-tight">Total Projects</h4>
+                            <div class="card-stat">{{ total_projects|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="dashboard-card flex items-center gap-4">
+                        <i class="fas fa-check-circle text-3xl text-teal-600"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 tracking-tight">Completed Projects</h4>
+                            <div class="card-stat">{{ completed_projects|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="dashboard-card flex items-center gap-4">
+                        <i class="fas fa-tasks text-3xl text-yellow-600"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 tracking-tight">In Progress Projects</h4>
+                            <div class="card-stat">{{ in_progress_projects|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="dashboard-card flex items-center gap-4">
+                        <i class="fas fa-hourglass-start text-3xl text-red-600"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 tracking-tight">Pending Projects</h4>
+                            <div class="card-stat">{{ pending_projects|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chart -->
+            <div class="chart-container fade-in" aria-label="Statistics chart">
+                <canvas id="dashboardChart" class="h-48"></canvas>
+            </div>
+
+            <!-- Project Progress -->
+            <section class="dashboard-card fade-in" aria-label="Project progress">
+                <h4 class="text-base font-semibold mb-4 tracking-tight">📊 Project Progress</h4>
+                <div class="mb-3">
+                    <p class="font-semibold text-sm">Project Alpha</p>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100">70%</div>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm">Project Beta</p>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-info" style="width: 45%;" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">45%</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="dashboard-card text-center fade-in" aria-label="Quick actions">
+                <h4 class="text-base font-semibold mb-4 tracking-tight">⚡ Quick Actions</h4>
+                <div class="flex justify-center gap-4">
+                    <a href="{% url 'create_project' %}" class="btn btn-primary">+ Add Project</a>
+                    <a href="{% url 'create_task' %}" class="btn btn-primary">+  Add Task</a>
+                </div>
+            </section>
+
+            <!-- Notifications -->
+            <section class="dashboard-card fade-in" aria-label="Recent notifications">
+                <h4 class="text-base font-semibold mb-4 tracking-tight">🔔 Recent Notifications</h4>
+                <ul class="space-y-2">
+                    <li class="notification-item">
+                        <i class="fas fa-user-plus text-success mr-3"></i>
+                        <span>New user <strong>Alex</strong> registered.</span>
+                    </li>
+                    <li class="notification-item">
+                        <i class="fas fa-tasks text-warning mr-3"></i>
+                        <span>Task <strong>“Design UI”</strong> assigned to team B.</span>
+                    </li>
+                    <li class="notification-item">
+                        <i class="fas fa-bell text-danger mr-3"></i>
+                        <span>Project <strong>“CRM Build”</strong> deadline in 2 days.</span>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Admin Profile -->
+            <section class="dashboard-card text-center fade-in" aria-label="Admin profile">
+                <img src="{% static 'images/admin_profile.png' %}" class="rounded-circle mb-3 profile-img" width="80" alt="Admin profile">
+                <h5 class="text-lg font-semibold tracking-tight">Admin Name</h5>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">admin@example.com</p>
+                <a href="{% url 'profile' %}" class="btn btn-primary text-sm px-4 py-2">Edit Profile</a>
+            </section>
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let dashboardChart; // Global variable for chart instance
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+            sidebar.classList.toggle('active', !sidebar.classList.contains('collapsed'));
+        }
+
+        function toggleDarkMode() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+            updateChartColors();
+        }
+
+        function updateChartColors() {
+            if (!dashboardChart) return;
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            dashboardChart.options.plugins.tooltip.backgroundColor = isDarkMode ? '#333' : '#fff';
+            dashboardChart.options.scales.x.grid.color = isDarkMode ? '#777' : '#ddd';
+            dashboardChart.options.scales.y.grid.color = isDarkMode ? '#777' : '#ddd';
+            dashboardChart.options.scales.x.ticks.color = isDarkMode ? '#f4f4f4' : '#333';
+            dashboardChart.options.scales.y.ticks.color = isDarkMode ? '#f4f4f4' : '#333';
+            dashboardChart.options.plugins.legend.labels.color = isDarkMode ? '#f4f4f4' : '#333';
+            dashboardChart.update();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Theme Persistence
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+
+            // Initialize Chart
+            const ctx = document.getElementById('dashboardChart').getContext('2d');
+            const chartData = [
+                {{ total_users|default:0 }},
+                {{ total_projects|default:0 }},
+                {{ completed_projects|default:0 }},
+                {{ in_progress_projects|default:0 }},
+                {{ pending_projects|default:0 }}
+            ];
+            console.log('Chart Data:', chartData); // Debug data
+
+            try {
+                dashboardChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Users', 'Projects', 'Completed', 'In Progress', 'Pending'],
+                        datasets: [{
+                            label: 'Statistics',
+                            data: chartData,
+                            backgroundColor: ['#4CAF50', '#2196F3', '#8BC34A', '#FFC107', '#F44336'],
+                            borderRadius: 5,
+                            barThickness: 20
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                ticks: { color: '#333', font: { size: 10 } }
+                            },
+                            x: { 
+                                ticks: { color: '#333', font: { size: 10 } }
+                            }
+                        },
+                        plugins: {
+                            legend: { 
+                                labels: { color: '#333', font: { size: 10 } }
+                            },
+                            tooltip: { 
+                                backgroundColor: '#fff' 
+                            }
+                        },
+                        animation: false // Disable chart animations
+                    }
+                });
+                console.log('Chart initialized successfully');
+                updateChartColors();
+            } catch (error) {
+                console.error('Chart initialization failed:', error);
+            }
+        });
+    </script>
+</body>
+</html>
